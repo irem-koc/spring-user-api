@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private AuthManager authManager;
+    private final AuthManager authManager;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
