@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.iremkoc.spring_user_api.manager.AuthManager;
-import com.iremkoc.spring_user_api.model.AuthenticationResponse;
 import com.iremkoc.spring_user_api.model.LoginRequest;
 import com.iremkoc.spring_user_api.model.LoginResponse;
+import com.iremkoc.spring_user_api.model.OAuthLoginRequest;
 import com.iremkoc.spring_user_api.model.RegisterRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -23,14 +23,20 @@ public class AuthenticationController {
     private final AuthManager authManager;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
+    public ResponseEntity<String> register(
             @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authManager.register(request));
+        return authManager.register(request);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authManager.login(request));
+    }
+
+    @PostMapping("/oauth-login")
+    public ResponseEntity<LoginResponse> oauthLogin(
+            @RequestBody OAuthLoginRequest request) {
+        return ResponseEntity.ok(authManager.oauthLogin(request));
     }
 }
