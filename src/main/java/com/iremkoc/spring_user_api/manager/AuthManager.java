@@ -1,7 +1,9 @@
 package com.iremkoc.spring_user_api.manager;
 
 import java.util.HashMap;
+import java.util.Optional;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,9 +13,9 @@ import com.iremkoc.spring_user_api.config.JwtService;
 import com.iremkoc.spring_user_api.entity.Role;
 import com.iremkoc.spring_user_api.entity.User;
 import com.iremkoc.spring_user_api.exception.EmailAlreadyExistsException;
-import com.iremkoc.spring_user_api.model.AuthenticationResponse;
 import com.iremkoc.spring_user_api.model.LoginRequest;
 import com.iremkoc.spring_user_api.model.LoginResponse;
+import com.iremkoc.spring_user_api.model.OAuthLoginRequest;
 import com.iremkoc.spring_user_api.model.RegisterRequest;
 import com.iremkoc.spring_user_api.repository.UserRepository;
 import com.iremkoc.spring_user_api.service.AuthenticationService;
@@ -29,7 +31,7 @@ public class AuthManager implements AuthenticationService {
         private final AuthenticationManager authenticationManager;
 
         @Override
-        public AuthenticationResponse register(RegisterRequest request) {
+        public ResponseEntity<String> register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new EmailAlreadyExistsException("Bu e-posta zaten kullanımda: " + request.getEmail());
                 }
@@ -38,13 +40,7 @@ public class AuthManager implements AuthenticationService {
                                 .password(passwordEncoder.encode(request.getPassword())).role(Role.USER)
                                 .build();
                 userRepository.save(user);
-                var claims = new HashMap<String, Object>();
-                claims.put("name", request.getName());
-                claims.put("surname", request.getSurname());
-                var jwtToken = jwtService.generateToken(claims, user);
-                return AuthenticationResponse.builder()
-                                .token(jwtToken)
-                                .build();
+                return ResponseEntity.ok("Kayıt başarılı");
         }
 
         @Override
@@ -68,6 +64,32 @@ public class AuthManager implements AuthenticationService {
                                 .surname(user.getSurname())
                                 .userId(user.getId())
                                 .build();
+        }
+
+        @Override
+        public LoginResponse oauthLogin(OAuthLoginRequest request) {
+                Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+
+                User user = userOptional.orElseGet(() -> {
+                        User newUser = new User();
+                        newUser.setEmail(request.getEmail());
+                        newUser.setName(request.getName());
+                        newUser.setSurname(request.getSurname());
+                        newUser.setProvider(request.getProvider());
+                        newUser.setProviderId(request.getProviderId());
+                        newUser.setRole(Role.USER);
+                        return userRepository.save(newUser);
+                });
+
+                var claims = new HashMap<String, Object>();
+                claims.put("email", user.getEmail());
+                claims.put("name", user.getName());
+                claims.put("surname", user.getSurname());
+
+                var jwtToken = jwtService.generateToken(claims, user);
+
+                return new LoginResponse(jwtToken, user.getEmail(), user.getName(), user.getSurname(),
+                                user.getId());
         }
 
 }
