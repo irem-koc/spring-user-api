@@ -18,7 +18,6 @@ import io.jsonwebtoken.Jwts;
 
 public class JwtService {
 
-    private static final long EXPIRATION_TIME = 1000 * 60 * 24 * 7;
     private final SecretKey Key;
 
     public JwtService() {
